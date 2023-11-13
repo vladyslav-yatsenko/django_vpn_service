@@ -36,8 +36,8 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=32, null=True, blank=True)
     last_name = models.CharField(max_length=32, null=True, blank=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name"]
 
     objects = UserManager()
 
