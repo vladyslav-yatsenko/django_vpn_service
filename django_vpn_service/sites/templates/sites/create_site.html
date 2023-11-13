@@ -1,0 +1,6 @@
+<h2>Create a Site</h2>
+<form method="post" action="{% url 'create_site' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create Site</button>
+</form>
