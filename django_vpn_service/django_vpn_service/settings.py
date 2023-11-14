@@ -47,7 +47,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_vpn_service.middleware.Redirect404Middleware"
+    # "django_vpn_service.middleware.Redirect404Middleware"
 ]
 
 ROOT_URLCONF = "django_vpn_service.urls"

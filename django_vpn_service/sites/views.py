@@ -54,6 +54,7 @@ def update_site_counter(site):
     statistics.save()
 
 
+# Endpoint for main site page
 @login_required
 def proxy_site(request, user_site_name, site_url):
     site = get_object_or_404(Site, user=request.user, name=user_site_name)
@@ -64,6 +65,7 @@ def proxy_site(request, user_site_name, site_url):
     update_site_data_statistics(site, request, response)
     update_site_counter(site)
 
+    # Proxy site links
     soup = BeautifulSoup(response.content, "html.parser")
     for link in soup.find_all("a", href=True):
         parsed_href = urlparse(link["href"])
@@ -71,26 +73,41 @@ def proxy_site(request, user_site_name, site_url):
             and parsed_href.netloc == parsed_original_site.netloc
         ):
             link["href"] = f"/{user_site_name}/{link['href']}"
+        if not parsed_href.scheme and not parsed_href.netloc:
+            link[
+                "href"] = (f"/{user_site_name}/{parsed_original_site.scheme}://{parsed_original_site.netloc}"
+                           f"{link['href']}")
 
-    for tag in soup.find_all(['a', 'img', 'script', 'link'], href=True):
-        if not tag['href'].startswith(f"{user_site_name}"):
-            parsed_data_href = urlparse(tag['href'])
-            if (parsed_data_href.scheme == parsed_original_site.scheme
-                and parsed_data_href.netloc == parsed_original_site.netloc
-            ):
-                tag['href'] = f'data/{user_site_name}/{tag["href"]}'
+    # Proxy additional data links
+    for tag in soup.find_all(['img', 'script', 'link'], href=True):
+        # if not tag['href'].startswith(f"{user_site_name}"):
+        parsed_data_href = urlparse(tag['href'])
+        if (parsed_data_href.scheme == parsed_original_site.scheme
+            and parsed_data_href.netloc == parsed_original_site.netloc
+        ):
+            tag['href'] = f'/data/{user_site_name}/{tag["href"]}'
+        if not parsed_data_href.scheme and not parsed_data_href.netloc:
+            tag[
+                "href"] = (f"/data/{user_site_name}/{parsed_original_site.scheme}://{parsed_original_site.netloc}"
+                           f"{tag['href']}")
 
     for tag in soup.find_all(['script'], src=True):
         if not tag['src'].startswith(f"{user_site_name}"):
+
             parsed_src_href = urlparse(tag['src'])
             if (parsed_src_href.scheme == parsed_original_site.scheme
                 and parsed_src_href.netloc == parsed_original_site.netloc
             ):
                 tag['src'] = f'/data/{user_site_name}/{tag["src"]}'
+            if not parsed_src_href.scheme and not parsed_src_href.netloc:
+                tag[
+                    "src"] = (f"/data/{user_site_name}/{parsed_original_site.scheme}://{parsed_original_site.netloc}"
+                              f"{tag['src']}")
 
     return HttpResponse(str(soup))
 
 
+# Endpoint for additional page data
 def proxy_data(request, user_site_name, data_url):
     site = get_object_or_404(Site, user=request.user, name=user_site_name)
     response = requests.get(data_url)
@@ -100,8 +117,15 @@ def proxy_data(request, user_site_name, data_url):
     django_response = HttpResponse(content=response.content, status=response.status_code)
     for header, value in response.headers.items():
         if header in (
-        "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailers", "Transfer-Encoding",
-        "Upgrade"):
+            "Connection",
+            "Keep-Alive",
+            "Proxy-Authenticate",
+            "Proxy-Authorization",
+            "TE",
+            "Trailers",
+            "Transfer-Encoding",
+            "Upgrade"
+        ):
             continue
         django_response[header] = value
 
