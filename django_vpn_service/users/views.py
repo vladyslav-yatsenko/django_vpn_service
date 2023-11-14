@@ -26,7 +26,10 @@ def login(request):
         if form.is_valid():
             user = form.get_user()
             auth_login(request, user)
-            return redirect("home")
+
+            next_param = request.GET.get('next', None)
+            print(next_param)
+            return redirect(next_param) if next_param else redirect("home")
     else:
         form = LoginForm()
     return render(request, "users/login.html", {"form": form})

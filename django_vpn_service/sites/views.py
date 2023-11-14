@@ -32,6 +32,7 @@ def home(request):
     return render(request, "sites/home.html", {"user_sites": user_sites, "user": request.user})
 
 
+@login_required
 def proxy_site(request, user_site_name, routes_on_original_site):
     get_object_or_404(Site, user=request.user, name=user_site_name)
     parsed_original_site = urlparse(routes_on_original_site)
