@@ -2,6 +2,8 @@
     <h2>Hi, {{ user.first_name }} {{ user.last_name }}! <a href="{% url 'logout' %}">Logout</a></h2>
     <a href="{% url 'user_profile' %}">Edit Profile</a>
     <br><br>
+    <a href="{% url 'user_site_statistics' %}">Your Site Statistics</a>
+    <br><br>
     <a href="{% url 'create_site' %}">Create a New Site</a>
     <h3>Your Sites:</h3>
     <ul>

@@ -67,3 +67,28 @@ def proxy_site(request, user_site_name, routes_on_original_site):
             link["href"] = f"/{user_site_name}/{link['href']}"
 
     return HttpResponse(str(soup))
+
+
+def convert_bytes_to_another_unit(byte_size):
+    size_units = ['B', 'KB', 'MB', 'GB']
+
+    unit_index = 0
+    while byte_size >= 1024 and unit_index < len(size_units) - 1:
+        byte_size /= 1024.0
+        unit_index += 1
+
+    formatted_size = f"{byte_size:.2f} {size_units[unit_index]}"
+
+    return formatted_size
+
+
+def user_site_statistics(request):
+    site_statistics = SiteStatistics.objects.filter(site__user=request.user)
+
+    sites_instances = []
+    for site in site_statistics:
+        site.data_sent = convert_bytes_to_another_unit(site.data_sent)
+        site.data_received = convert_bytes_to_another_unit(site.data_received)
+        sites_instances.append(site)
+
+    return render(request, 'sites/user_site_statistics.html', {'site_statistics': site_statistics})

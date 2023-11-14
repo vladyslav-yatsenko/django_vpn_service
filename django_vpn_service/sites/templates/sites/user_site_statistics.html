@@ -1,0 +1,11 @@
+<h2>Your Site Statistics</h2>
+
+<a href="{% url 'home' %}">Back to Home</a>
+
+{% for site in site_statistics %}
+  <h3>{{ site.site.name }}</h3>
+  <p>Page Views: {{ site.page_views }}</p>
+  <p>Data Sent: {{ site.data_sent }} bytes</p>
+  <p>Data Received: {{ site.data_received }} bytes</p>
+{% endfor %}
+
