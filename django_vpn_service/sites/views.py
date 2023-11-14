@@ -35,11 +35,11 @@ def home(request):
 def update_site_data_statistics(site, request, response):
     statistics, _ = SiteStatistics.objects.get_or_create(site=site)
 
-    request_header_size = len(str(request.META).encode('utf-8'))
+    request_header_size = len(str(request.META).encode("utf-8"))
     request_body_size = (len(response.request.body) if response.request.body else 0)
     sent_data_size = request_header_size + request_body_size
 
-    response_header_size = len(str(response.headers).encode('utf-8'))
+    response_header_size = len(str(response.headers).encode("utf-8"))
     response_body_size = len(response.content)
     received_data_size = response_header_size + response_body_size
 
@@ -79,30 +79,27 @@ def proxy_site(request, user_site_name, site_url):
                            f"{link['href']}")
 
     # Proxy additional data links
-    for tag in soup.find_all(['img', 'script', 'link'], href=True):
-        # if not tag['href'].startswith(f"{user_site_name}"):
-        parsed_data_href = urlparse(tag['href'])
+    for tag in soup.find_all(["link"], href=True):
+        parsed_data_href = urlparse(tag["href"])
         if (parsed_data_href.scheme == parsed_original_site.scheme
             and parsed_data_href.netloc == parsed_original_site.netloc
         ):
-            tag['href'] = f'/data/{user_site_name}/{tag["href"]}'
+            tag["href"] = f'/data/{user_site_name}/{tag["href"]}'
         if not parsed_data_href.scheme and not parsed_data_href.netloc:
             tag[
                 "href"] = (f"/data/{user_site_name}/{parsed_original_site.scheme}://{parsed_original_site.netloc}"
                            f"{tag['href']}")
 
-    for tag in soup.find_all(['script'], src=True):
-        if not tag['src'].startswith(f"{user_site_name}"):
-
-            parsed_src_href = urlparse(tag['src'])
-            if (parsed_src_href.scheme == parsed_original_site.scheme
-                and parsed_src_href.netloc == parsed_original_site.netloc
-            ):
-                tag['src'] = f'/data/{user_site_name}/{tag["src"]}'
-            if not parsed_src_href.scheme and not parsed_src_href.netloc:
-                tag[
-                    "src"] = (f"/data/{user_site_name}/{parsed_original_site.scheme}://{parsed_original_site.netloc}"
-                              f"{tag['src']}")
+    for tag in soup.find_all(["img","script", "audio", "video", "source"], src=True):
+        parsed_src_href = urlparse(tag["src"])
+        if (parsed_src_href.scheme == parsed_original_site.scheme
+            and parsed_src_href.netloc == parsed_original_site.netloc
+        ):
+            tag["src"] = f'/data/{user_site_name}/{tag["src"]}'
+        if not parsed_src_href.scheme and not parsed_src_href.netloc:
+            tag[
+                "src"] = (f"/data/{user_site_name}/{parsed_original_site.scheme}://{parsed_original_site.netloc}"
+                          f"{tag['src']}")
 
     return HttpResponse(str(soup))
 
@@ -133,7 +130,7 @@ def proxy_data(request, user_site_name, data_url):
 
 
 def convert_bytes_to_another_unit(byte_size):
-    size_units = ['B', 'KB', 'MB', 'GB']
+    size_units = ["B", "KB", "MB", "GB"]
 
     unit_index = 0
     while byte_size >= 1024 and unit_index < len(size_units) - 1:
@@ -154,4 +151,4 @@ def user_site_statistics(request):
         site.data_received = convert_bytes_to_another_unit(site.data_received)
         sites_instances.append(site)
 
-    return render(request, 'sites/user_site_statistics.html', {'site_statistics': site_statistics})
+    return render(request, "sites/user_site_statistics.html", {"site_statistics": site_statistics})
