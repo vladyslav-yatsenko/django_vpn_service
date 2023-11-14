@@ -1,6 +1,9 @@
 <h2>Login</h2>
+
 <form method="post" action="{% url 'login' %}?next={{ request.GET.next }}">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Login</button>
 </form>
+
+<p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
