@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 import requests
 
 from .forms import SiteForm
-from .models import Site
+from .models import Site, SiteStatistics
 
 
 @login_required
@@ -32,15 +32,33 @@ def home(request):
     return render(request, "sites/home.html", {"user_sites": user_sites, "user": request.user})
 
 
+def update_site_statistics(site, request, response):
+    statistics, _ = SiteStatistics.objects.get_or_create(site=site)
+
+    request_header_size = len(str(request.META).encode('utf-8'))
+    request_body_size = (len(response.request.body) if response.request.body else 0)
+    sent_data_size = request_header_size + request_body_size
+
+    response_header_size = len(str(response.headers).encode('utf-8'))
+    response_body_size = len(response.content)
+    received_data_size = response_header_size + response_body_size
+
+    statistics.page_views += 1
+    statistics.data_sent += sent_data_size
+    statistics.data_received += received_data_size
+    statistics.save()
+
+
 @login_required
 def proxy_site(request, user_site_name, routes_on_original_site):
-    get_object_or_404(Site, user=request.user, name=user_site_name)
+    site = get_object_or_404(Site, user=request.user, name=user_site_name)
     parsed_original_site = urlparse(routes_on_original_site)
 
     response = requests.get(routes_on_original_site)
-    content = response.content
 
-    soup = BeautifulSoup(content, "html.parser")
+    update_site_statistics(site, request, response)
+
+    soup = BeautifulSoup(response.content, "html.parser")
     for link in soup.find_all("a", href=True):
         parsed_href = urlparse(link["href"])
         if (parsed_href.scheme == parsed_original_site.scheme
