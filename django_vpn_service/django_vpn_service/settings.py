@@ -47,6 +47,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_vpn_service.middleware.Redirect404Middleware"
 ]
 
 ROOT_URLCONF = "django_vpn_service.urls"
@@ -121,3 +122,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "users.User"
 
 LOGIN_URL = "login"
+HOME_PAGE = "/home"
+
