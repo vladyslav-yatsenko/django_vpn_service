@@ -1,0 +1,20 @@
+{% if user.is_authenticated %}
+    <h2>Hi, {{ user.first_name }} {{ user.last_name }}! <a href="{% url 'logout' %}">Logout</a></h2>
+    <a href="{% url 'user_profile' %}">Edit Profile</a>
+    <br><br>
+    <a href="{% url 'create_site' %}">Create a New Site</a>
+    <h3>Your Sites:</h3>
+    <ul>
+        {% for site in user_sites %}
+        <li>{{ site.name }} - <a href="{{ site.url }}" target="_blank">{{ site.url }}</a></li>
+        <form method="post" action="{% url 'proxy_site' user_site_name=site.name routes_on_original_site=site.url %}">
+            {% csrf_token %}
+            <button type="submit">Go to Site</button>
+        </form>
+        {% endfor %}
+    </ul>
+{% else %}
+    <h2>Welcome to Django VPN Service! Please <a href="{% url 'login' %}">log in</a>
+        or <a href="{% url 'register' %}">register</a>.
+    </h2>
+{% endif %}

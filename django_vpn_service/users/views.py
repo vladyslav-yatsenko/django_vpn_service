@@ -1,8 +1,8 @@
-from django.contrib.auth import login as auth_login
-from django.shortcuts import redirect, render
+from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
 
-from .forms import LoginForm, RegistrationForm
+from .forms import LoginForm, ProfileForm, RegistrationForm
 
 
 def register(request):
@@ -25,7 +25,7 @@ def login(request):
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            login(request, user)
+            auth_login(request, user)
             return redirect("home")
     else:
         form = LoginForm()
@@ -33,5 +33,18 @@ def login(request):
 
 
 @login_required
-def home(request):
-    return render(request, "users/home.html", {"user": request.user})
+def logout(request):
+    auth_logout(request)
+    return redirect('home')
+
+
+@login_required
+def user_profile(request):
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    else:
+        form = ProfileForm(instance=request.user)
+    return render(request, 'users/profile.html', {'form': form})
