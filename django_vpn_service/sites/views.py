@@ -32,7 +32,7 @@ def home(request):
     return render(request, "sites/home.html", {"user_sites": user_sites, "user": request.user})
 
 
-def update_site_statistics(site, request, response):
+def update_site_data_statistics(site, request, response):
     statistics, _ = SiteStatistics.objects.get_or_create(site=site)
 
     request_header_size = len(str(request.META).encode('utf-8'))
@@ -43,20 +43,26 @@ def update_site_statistics(site, request, response):
     response_body_size = len(response.content)
     received_data_size = response_header_size + response_body_size
 
-    statistics.page_views += 1
     statistics.data_sent += sent_data_size
     statistics.data_received += received_data_size
     statistics.save()
 
 
+def update_site_counter(site):
+    statistics, _ = SiteStatistics.objects.get_or_create(site=site)
+    statistics.page_views += 1
+    statistics.save()
+
+
 @login_required
-def proxy_site(request, user_site_name, routes_on_original_site):
+def proxy_site(request, user_site_name, site_url):
     site = get_object_or_404(Site, user=request.user, name=user_site_name)
-    parsed_original_site = urlparse(routes_on_original_site)
+    parsed_original_site = urlparse(site_url)
 
-    response = requests.get(routes_on_original_site)
+    response = requests.get(site_url)
 
-    update_site_statistics(site, request, response)
+    update_site_data_statistics(site, request, response)
+    update_site_counter(site)
 
     soup = BeautifulSoup(response.content, "html.parser")
     for link in soup.find_all("a", href=True):
@@ -66,7 +72,40 @@ def proxy_site(request, user_site_name, routes_on_original_site):
         ):
             link["href"] = f"/{user_site_name}/{link['href']}"
 
+    for tag in soup.find_all(['a', 'img', 'script', 'link'], href=True):
+        if not tag['href'].startswith(f"{user_site_name}"):
+            parsed_data_href = urlparse(tag['href'])
+            if (parsed_data_href.scheme == parsed_original_site.scheme
+                and parsed_data_href.netloc == parsed_original_site.netloc
+            ):
+                tag['href'] = f'data/{user_site_name}/{tag["href"]}'
+
+    for tag in soup.find_all(['script'], src=True):
+        if not tag['src'].startswith(f"{user_site_name}"):
+            parsed_src_href = urlparse(tag['src'])
+            if (parsed_src_href.scheme == parsed_original_site.scheme
+                and parsed_src_href.netloc == parsed_original_site.netloc
+            ):
+                tag['src'] = f'/data/{user_site_name}/{tag["src"]}'
+
     return HttpResponse(str(soup))
+
+
+def proxy_data(request, user_site_name, data_url):
+    site = get_object_or_404(Site, user=request.user, name=user_site_name)
+    response = requests.get(data_url)
+
+    update_site_data_statistics(site, request, response)
+
+    django_response = HttpResponse(content=response.content, status=response.status_code)
+    for header, value in response.headers.items():
+        if header in (
+        "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailers", "Transfer-Encoding",
+        "Upgrade"):
+            continue
+        django_response[header] = value
+
+    return django_response
 
 
 def convert_bytes_to_another_unit(byte_size):

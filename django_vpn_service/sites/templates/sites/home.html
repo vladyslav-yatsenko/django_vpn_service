@@ -9,7 +9,7 @@
     <ul>
         {% for site in user_sites %}
         <li>{{ site.name }} - <a href="{{ site.url }}" target="_blank">{{ site.url }}</a></li>
-        <form method="post" action="{% url 'proxy_site' user_site_name=site.name routes_on_original_site=site.url %}">
+        <form method="post" action="{% url 'proxy_site' user_site_name=site.name site_url=site.url %}">
             {% csrf_token %}
             <button type="submit">Go to Site</button>
         </form>
